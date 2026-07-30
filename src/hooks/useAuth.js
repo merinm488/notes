@@ -33,7 +33,7 @@ export function useAuth() {
       }
 
       // Send the key to server for hashing and authentication
-      const response = await fetch('/api/notes/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: normalizedKey })

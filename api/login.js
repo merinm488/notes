@@ -1,6 +1,6 @@
 /**
  * Login Route for Vercel
- * POST /api/notes/login
+ * POST /api/login
  * Authenticates user and returns their data using textdb.dev
  */
 
@@ -59,7 +59,7 @@ async function userExists(hash) {
 }
 
 /**
- * POST /api/notes/login
+ * POST /api/login
  * Login with key (server-side hashing for consistency)
  */
 export async function POST(request) {
@@ -71,8 +71,13 @@ export async function POST(request) {
       return Response.json({ error: 'Key is required' }, { status: 400 });
     }
 
-    // Normalize key
-    const normalizedKey = key.toLowerCase().trim().replace(/\s+/g, '-');
+    // Normalize key (same as frontend)
+    const normalizedKey = key
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z-]/g, '')
+      .replace(/-+/g, '-');
     const parts = normalizedKey.split('-');
 
     // Validate key format

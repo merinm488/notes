@@ -131,8 +131,13 @@ export async function POST(request) {
       return Response.json({ error: 'Key is required' }, { status: 400 });
     }
 
-    // Normalize key
-    const normalizedKey = key.toLowerCase().trim().replace(/\s+/g, '-');
+    // Normalize key (same as frontend)
+    const normalizedKey = key
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z-]/g, '')
+      .replace(/-+/g, '-');
     const parts = normalizedKey.split('-');
 
     if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-z]+$/.test(p))) {
