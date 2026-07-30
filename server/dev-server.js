@@ -118,12 +118,12 @@ app.get('/api/notes', (req, res) => {
 });
 
 /**
- * POST /api/notes/login
- * Login with key (server-side hashing for consistency)
+ * POST /api/notes
+ * Handle login and account creation
  */
-app.post('/api/notes/login', (req, res) => {
+app.post('/api/notes', (req, res) => {
   try {
-    const { key } = req.body;
+    const { key, action } = req.body;
 
     if (!key) {
       return res.status(400).json({ error: 'Key is required' });
@@ -141,31 +141,21 @@ app.post('/api/notes/login', (req, res) => {
     // Generate hash on server
     const hash = generateHash(normalizedKey);
 
-    // Check if user exists
-    const userData = getUserData(hash);
+    // Handle login action
+    if (action === 'login') {
+      const userData = getUserData(hash);
 
-    if (!userData) {
-      return res.status(404).json({ error: 'User not found' });
+      if (!userData) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Return hash and user data
+      return res.json({
+        success: true,
+        hash,
+        data: userData
+      });
     }
-
-    // Return hash and user data
-    res.json({
-      success: true,
-      hash,
-      data: userData
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-/**
- * POST /api/notes
- * Create new user account
- */
-app.post('/api/notes', (req, res) => {
-  try {
-    const { key } = req.body;
 
     if (!key) {
       return res.status(400).json({ error: 'Key is required' });
@@ -283,6 +273,7 @@ app.put('/api/notes', (req, res) => {
           if (noteToArchive.archived) {
             noteToArchive.pinned = false;
           }
+          noteToArchive.updatedAt = new Date().toISOString();
         }
         break;
 

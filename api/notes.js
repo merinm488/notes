@@ -120,7 +120,7 @@ export async function GET(request) {
 
 /**
  * POST /api/notes
- * Create new user account
+ * Handle login and account creation
  */
 export async function POST(request) {
   try {
@@ -146,6 +146,22 @@ export async function POST(request) {
 
     const hash = generateHash(normalizedKey);
 
+    // Handle login action
+    if (action === 'login') {
+      const userData = await getUserData(hash);
+
+      if (!userData) {
+        return Response.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      return Response.json({
+        success: true,
+        hash,
+        data: userData
+      });
+    }
+
+    // Handle account creation (default or explicit create action)
     // Check if user already exists
     const exists = await userExists(hash);
     if (exists) {
@@ -240,6 +256,18 @@ export async function PUT(request) {
         if (note) {
           note.pinned = !note.pinned;
           note.updatedAt = new Date().toISOString();
+        }
+        break;
+
+      case 'toggleArchive':
+        const noteToArchive = userData.notes.find(n => n.id === data.noteId);
+        if (noteToArchive) {
+          noteToArchive.archived = !noteToArchive.archived;
+          // Also unpin if archiving
+          if (noteToArchive.archived) {
+            noteToArchive.pinned = false;
+          }
+          noteToArchive.updatedAt = new Date().toISOString();
         }
         break;
 
