@@ -161,12 +161,16 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { key, action } = body;
+    const { key, name, action } = body;
 
-    console.log(`[API POST] Action: ${action}, Key: ${key}`);
+    console.log(`[API POST] Action: ${action}, Key: ${key}, Name: ${name}`);
 
     if (!key) {
       return Response.json({ error: 'Key is required' }, { status: 400 });
+    }
+
+    if (!name || name.trim() === '') {
+      return Response.json({ error: 'Name is required' }, { status: 400 });
     }
 
     // Normalize key (same as frontend)
@@ -189,12 +193,20 @@ export async function POST(request) {
 
     // Handle login action
     if (action === 'login') {
-      console.log(`[API POST] Handling login for hash: ${hash}`);
+      console.log(`[API POST] Handling login for hash: ${hash}, name: ${name}`);
       const userData = await getUserData(hash);
 
       if (!userData) {
         console.log(`[API POST] Login failed - user not found`);
         return Response.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      // Validate name matches
+      const storedName = userData.settings?.name?.toLowerCase();
+      const providedName = name.trim().toLowerCase();
+      if (storedName && storedName !== providedName) {
+        console.log(`[API POST] Login failed - name mismatch: stored="${storedName}", provided="${providedName}"`);
+        return Response.json({ error: 'Name does not match our records' }, { status: 401 });
       }
 
       console.log(`[API POST] Login successful`);
@@ -206,7 +218,7 @@ export async function POST(request) {
     }
 
     // Handle account creation (default or explicit create action)
-    console.log(`[API POST] Handling account creation for hash: ${hash}`);
+    console.log(`[API POST] Handling account creation for hash: ${hash}, name: ${name}`);
     // Check if user already exists
     const exists = await userExists(hash);
     console.log(`[API POST] User exists check: ${exists}`);
@@ -226,6 +238,7 @@ export async function POST(request) {
       ],
       notes: [],
       settings: {
+        name: name.trim(),
         theme: 'dark',
         createdAt: new Date().toISOString()
       }

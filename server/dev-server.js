@@ -123,10 +123,14 @@ app.get('/api/notes', (req, res) => {
  */
 app.post('/api/notes', (req, res) => {
   try {
-    const { key, action } = req.body;
+    const { key, name, action } = req.body;
 
     if (!key) {
       return res.status(400).json({ error: 'Key is required' });
+    }
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Name is required' });
     }
 
     // Normalize key
@@ -149,6 +153,13 @@ app.post('/api/notes', (req, res) => {
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // Validate name matches
+      const storedName = userData.settings?.name?.toLowerCase();
+      const providedName = name.trim().toLowerCase();
+      if (storedName && storedName !== providedName) {
+        return res.status(401).json({ error: 'Name does not match our records' });
+      }
+
       // Return hash and user data
       return res.json({
         success: true,
@@ -156,20 +167,6 @@ app.post('/api/notes', (req, res) => {
         data: userData
       });
     }
-
-    if (!key) {
-      return res.status(400).json({ error: 'Key is required' });
-    }
-
-    // Normalize key
-    const normalizedKey = key.toLowerCase().trim().replace(/\s+/g, '-');
-    const parts = normalizedKey.split('-');
-
-    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-z]+$/.test(p))) {
-      return res.status(400).json({ error: 'Invalid key format' });
-    }
-
-    const hash = generateHash(normalizedKey);
 
     // Check if user already exists
     if (userExists(hash)) {
@@ -188,6 +185,7 @@ app.post('/api/notes', (req, res) => {
       ],
       notes: [],
       settings: {
+        name: name.trim(),
         theme: 'dark',
         createdAt: new Date().toISOString()
       }

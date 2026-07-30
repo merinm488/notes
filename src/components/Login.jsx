@@ -13,6 +13,7 @@ import { normalizeKey } from '../lib/cryptoUtils';
  */
 export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode }) {
   const [keyInput, setKeyInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
   const [mode, setMode] = useState('existing'); // 'existing' or 'new'
   const [showCustom, setShowCustom] = useState(false);
   const [suggestedKey, setSuggestedKey] = useState('');
@@ -32,9 +33,9 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
    */
   const handleLogin = (e) => {
     e.preventDefault();
-    if (keyInput.trim()) {
+    if (keyInput.trim() && nameInput.trim()) {
       // Normalize the key before sending to server
-      onLogin(normalizeKey(keyInput.trim()));
+      onLogin(normalizeKey(keyInput.trim()), nameInput.trim());
     }
   };
 
@@ -43,9 +44,9 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
    */
   const handleCreateAccount = (e) => {
     e.preventDefault();
-    if (keyInput.trim()) {
+    if (keyInput.trim() && nameInput.trim()) {
       // Normalize the key before sending to server
-      onCreateAccount(normalizeKey(keyInput.trim()));
+      onCreateAccount(normalizeKey(keyInput.trim()), nameInput.trim());
     }
   };
 
@@ -152,13 +153,19 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     Want to create a new account with this key?
                   </p>
-                  <button
-                    onClick={() => onCreateAccount(normalizeKey(keyInput))}
-                    disabled={isLoading}
-                    className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium w-full disabled:opacity-50"
-                  >
-                    {isLoading ? 'Creating...' : 'Create New Account'}
-                  </button>
+                  {nameInput ? (
+                    <button
+                      onClick={() => onCreateAccount(normalizeKey(keyInput), nameInput)}
+                      disabled={isLoading}
+                      className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium w-full disabled:opacity-50"
+                    >
+                      {isLoading ? 'Creating...' : 'Create New Account'}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-gray-400">
+                      Please enter your name above to create an account
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -167,6 +174,24 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
           {/* Existing Key Mode */}
           {mode === 'existing' && !showCustom ? (
             <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-2">
+                  Your Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  name="login-name"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Enter your name"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  disabled={isLoading}
+                  autoFocus
+                  autoComplete="name"
+                />
+              </div>
+
               <div>
                 <label htmlFor="key" className="block text-sm font-medium mb-2">
                   Enter your Key
@@ -180,14 +205,13 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
                   placeholder="Ex: sky-fill-cycle"
                   className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-yellow-500 [&::placeholder]:italic"
                   disabled={isLoading}
-                  autoFocus
                   autoComplete="off"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={isLoading || !keyInput}
+                disabled={isLoading || !keyInput || !nameInput}
                 className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium w-full disabled:opacity-50 hover:bg-yellow-600 dark:hover:bg-gray-200"
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
@@ -237,6 +261,24 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
             /* Custom Key Mode */
             <form onSubmit={handleCreateAccount} className="space-y-4" autoComplete="off">
               <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-2">
+                  Your Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  name="create-name"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Enter your name"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  disabled={isLoading}
+                  autoFocus
+                  autoComplete="name"
+                />
+              </div>
+
+              <div>
                 <label htmlFor="customKey" className="block text-sm font-medium mb-2">
                   Create Your Key
                 </label>
@@ -249,7 +291,6 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
                   placeholder="your-words-here"
                   className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center tracking-wider focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   disabled={isLoading}
-                  autoFocus
                   autoComplete="off"
                 />
               </div>
@@ -261,6 +302,7 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
                   onClick={() => {
                     setShowCustom(false);
                     setKeyInput('');
+                    setNameInput('');
                   }}
                   className="bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-medium flex-1"
                 >
@@ -268,7 +310,7 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading || !keyInput}
+                  disabled={isLoading || !keyInput || !nameInput}
                   className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium flex-1 disabled:opacity-50 hover:bg-yellow-600 dark:hover:bg-gray-200"
                 >
                   {isLoading ? 'Creating...' : 'Create Account'}
