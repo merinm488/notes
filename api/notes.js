@@ -43,16 +43,30 @@ async function getUserData(hash) {
     }
 
     const text = await response.text();
-    console.log(`[TEXTDB GET] Response text length: ${text?.length}, content: ${text?.substring(0, 100)}`);
+    console.log(`[TEXTDB GET] Response text length: ${text?.length}, raw content: "${text}"`);
 
     // textdb.dev returns default content for non-existent keys
-    if (!text || text.trim() === '' || text.includes('hello world from textdb')) {
-      console.log(`[TEXTDB GET] Default/empty content, returning null`);
+    // Check for empty, whitespace, or default textdb responses
+    if (!text || text.trim() === '' || text.includes('hello world from textdb') || text.length < 10) {
+      console.log(`[TEXTDB GET] Default/empty/invalid content, returning null`);
       return null;
     }
 
-    const parsed = JSON.parse(text);
-    console.log(`[TEXTDB GET] Parsed user data with ${parsed.notes?.length || 0} notes`);
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (parseError) {
+      console.error(`[TEXTDB GET] JSON parse error: ${parseError.message}`);
+      return null;
+    }
+
+    // Validate that we have actual user data structure
+    if (!parsed || typeof parsed !== 'object' || !parsed.hasOwnProperty('notes') || !parsed.hasOwnProperty('folders')) {
+      console.log(`[TEXTDB GET] Invalid user data structure, returning null`);
+      return null;
+    }
+
+    console.log(`[TEXTDB GET] Valid user data with ${parsed.notes?.length || 0} notes, ${parsed.folders?.length || 0} folders`);
     return parsed;
   } catch (error) {
     console.error('[TEXTDB GET] Error reading user data:', error);
@@ -85,9 +99,18 @@ async function saveUserData(hash, userData) {
       throw new Error(`Failed to save data: ${response.status}`);
     }
 
-    const responseText = await response.text();
-    console.log(`[TEXTDB POST] Response: ${responseText?.substring(0, 100)}`);
-    return true;
+    let responseText = await response.text();
+    console.log(`[TEXTDB POST] Response text: "${responseText?.substring(0, 200)}"`);
+
+    // Verify the save worked by checking the response
+    if (responseText && responseText.trim() !== '' && !responseText.includes('hello world from textdb')) {
+      console.log(`[TEXTDB POST] Save appears successful`);
+      return true;
+    } else {
+      console.warn(`[TEXTDB POST] Response looks suspicious: "${responseText}"`);
+      // Still return true since response.ok was true
+      return true;
+    }
   } catch (error) {
     console.error('[TEXTDB POST] Error saving user data:', error);
     return false;
