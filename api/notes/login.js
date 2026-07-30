@@ -1,58 +1,60 @@
 /**
  * Login Route for Vercel
  * POST /api/notes/login
- * Authenticates user and returns their data
+ * Authenticates user and returns their data using textdb.dev
  */
 
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 
-const DB_DIR = path.join(process.cwd(), 'db');
-const USERS_DIR = path.join(DB_DIR, 'users');
-
-// Ensure directories exist
-function ensureDirectories() {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(USERS_DIR)) {
-    fs.mkdirSync(USERS_DIR, { recursive: true });
-  }
-}
+const TEXTDB_API_BASE = 'https://textdb.dev/api/data';
 
 // Generate SHA-256 hash
 function generateHash(input) {
   return crypto.createHash('sha256').update(input).digest('hex');
 }
 
-// Get user file path
-function getUserFilePath(hash) {
-  return path.join(USERS_DIR, `${hash}.json`);
-}
-
-// Read user data
-function getUserData(hash) {
-  ensureDirectories();
-  const filePath = getUserFilePath(hash);
-
-  if (!fs.existsSync(filePath)) {
-    return null;
-  }
-
+/**
+ * Get user data from textdb.dev
+ * @param {string} hash - User's hash (used as textdb.dev identifier)
+ * @returns {Promise<Object|null>} - User data or null if not found
+ */
+async function getUserData(hash) {
   try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
+    const response = await fetch(`${TEXTDB_API_BASE}/${hash}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
+
+    const text = await response.text();
+
+    if (!text || text.trim() === '') {
+      return null;
+    }
+
+    return JSON.parse(text);
   } catch (error) {
-    console.error('Error reading user data:', error);
+    console.error('Error reading user data from textdb.dev:', error);
     return null;
   }
 }
 
-// Check if user exists
-function userExists(hash) {
-  const filePath = getUserFilePath(hash);
-  return fs.existsSync(filePath);
+/**
+ * Check if user exists
+ * @param {string} hash - User's hash
+ * @returns {Promise<boolean>} - Whether user exists
+ */
+async function userExists(hash) {
+  const userData = await getUserData(hash);
+  return userData !== null;
 }
 
 /**
@@ -81,11 +83,12 @@ export async function POST(request) {
     const hash = generateHash(normalizedKey);
 
     // Check if user exists
-    if (!userExists(hash)) {
+    const exists = await userExists(hash);
+    if (!exists) {
       return Response.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const userData = getUserData(hash);
+    const userData = await getUserData(hash);
 
     if (!userData) {
       return Response.json({ error: 'User not found' }, { status: 404 });

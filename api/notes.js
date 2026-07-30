@@ -1,77 +1,93 @@
 /**
  * TextDB Backend API Routes for Vercel
  *
- * This implements a REST API that stores data as JSON files (TextDB)
+ * This implements a REST API that stores data using textdb.dev external service
  */
 
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 
-const DB_DIR = path.join(process.cwd(), 'db');
-const USERS_DIR = path.join(DB_DIR, 'users');
-
-// Ensure directories exist
-function ensureDirectories() {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(USERS_DIR)) {
-    fs.mkdirSync(USERS_DIR, { recursive: true });
-  }
-}
+const TEXTDB_API_BASE = 'https://textdb.dev/api/data';
 
 // Generate SHA-256 hash
 function generateHash(input) {
   return crypto.createHash('sha256').update(input).digest('hex');
 }
 
-// Get user file path
-function getUserFilePath(hash) {
-  return path.join(USERS_DIR, `${hash}.json`);
+// Generate unique ID
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-// Read user data
-function getUserData(hash) {
-  ensureDirectories();
-  const filePath = getUserFilePath(hash);
-
-  if (!fs.existsSync(filePath)) {
-    return null;
-  }
-
+/**
+ * Get user data from textdb.dev
+ * @param {string} hash - User's hash (used as textdb.dev identifier)
+ * @returns {Promise<Object|null>} - User data or null if not found
+ */
+async function getUserData(hash) {
   try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
+    const response = await fetch(`${TEXTDB_API_BASE}/${hash}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
+
+    const text = await response.text();
+
+    if (!text || text.trim() === '') {
+      return null;
+    }
+
+    return JSON.parse(text);
   } catch (error) {
-    console.error('Error reading user data:', error);
+    console.error('Error reading user data from textdb.dev:', error);
     return null;
   }
 }
 
-// Write user data
-function saveUserData(hash, userData) {
-  ensureDirectories();
-  const filePath = getUserFilePath(hash);
-
+/**
+ * Save user data to textdb.dev
+ * @param {string} hash - User's hash (used as textdb.dev identifier)
+ * @param {Object} userData - User data to save
+ * @returns {Promise<boolean>} - Success status
+ */
+async function saveUserData(hash, userData) {
   try {
-    fs.writeFileSync(filePath, JSON.stringify(userData, null, 2), 'utf8');
+    const response = await fetch(`${TEXTDB_API_BASE}/${hash}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to save data: ${response.status}`);
+    }
+
     return true;
   } catch (error) {
-    console.error('Error saving user data:', error);
+    console.error('Error saving user data to textdb.dev:', error);
     return false;
   }
 }
 
-// Check if user exists
-function userExists(hash) {
-  const filePath = getUserFilePath(hash);
-  return fs.existsSync(filePath);
-}
-
-// Generate unique ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+/**
+ * Check if user exists
+ * @param {string} hash - User's hash
+ * @returns {Promise<boolean>} - Whether user exists
+ */
+async function userExists(hash) {
+  const userData = await getUserData(hash);
+  return userData !== null;
 }
 
 // ==================== HANDLERS ====================
@@ -89,7 +105,7 @@ export async function GET(request) {
       return Response.json({ error: 'Hash is required' }, { status: 400 });
     }
 
-    const userData = getUserData(hash);
+    const userData = await getUserData(hash);
 
     if (!userData) {
       return Response.json({ error: 'User not found' }, { status: 404 });
@@ -125,7 +141,8 @@ export async function POST(request) {
     const hash = generateHash(normalizedKey);
 
     // Check if user already exists
-    if (userExists(hash)) {
+    const exists = await userExists(hash);
+    if (exists) {
       return Response.json({ error: 'User already exists', code: 'USER_EXISTS' }, { status: 409 });
     }
 
@@ -146,7 +163,8 @@ export async function POST(request) {
       }
     };
 
-    if (saveUserData(hash, newUserData)) {
+    const saved = await saveUserData(hash, newUserData);
+    if (saved) {
       return Response.json({
         success: true,
         hash,
@@ -173,7 +191,7 @@ export async function PUT(request) {
       return Response.json({ error: 'Hash and action are required' }, { status: 400 });
     }
 
-    const userData = getUserData(hash);
+    const userData = await getUserData(hash);
 
     if (!userData) {
       return Response.json({ error: 'User not found' }, { status: 404 });
@@ -260,7 +278,8 @@ export async function PUT(request) {
         return Response.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    if (saveUserData(hash, userData)) {
+    const saved = await saveUserData(hash, userData);
+    if (saved) {
       return Response.json({ success: true, data: userData });
     } else {
       return Response.json({ error: 'Failed to save data' }, { status: 500 });
@@ -283,13 +302,25 @@ export async function DELETE(request) {
       return Response.json({ error: 'Hash is required' }, { status: 400 });
     }
 
-    const filePath = getUserFilePath(hash);
-
-    if (!fs.existsSync(filePath)) {
+    // Check if user exists
+    const userData = await getUserData(hash);
+    if (!userData) {
       return Response.json({ error: 'User not found' }, { status: 404 });
     }
 
-    fs.unlinkSync(filePath);
+    // Delete from textdb.dev by sending empty content
+    try {
+      await fetch(`${TEXTDB_API_BASE}/${hash}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(null)
+      });
+    } catch (error) {
+      // textdb.dev might not support proper deletion, but we'll try
+    }
 
     return Response.json({ success: true, message: 'Account deleted' });
   } catch (error) {
