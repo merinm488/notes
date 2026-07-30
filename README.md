@@ -34,24 +34,6 @@ This application is designed to help you understand **how backend systems work**
 - Node.js 16+ installed
 - npm or yarn package manager
 
-### Installation
-
-1. Navigate to the project directory:
-```bash
-cd Notes
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-4. Open your browser to `http://localhost:3000`
 
 ## 🏗️ Project Structure
 
@@ -118,57 +100,18 @@ Notes/
 
 ✅ **Data isolation** - Different keys produce completely different hashes
 
-## 📊 Database Structure
-
-The database (simulated with localStorage) has this structure:
-
-```javascript
-{
-  "a7f8c2e9b4d3f1a6c8e5b2d9f4a7c1e8": {  // This is the hashed key
-    folders: [
-      {
-        id: "f1",
-        name: "All Notes",
-        color: "#FACC15",
-        isDefault: true
-      },
-      {
-        id: "f2",
-        name: "Work",
-        color: "#3B82F6",
-        isDefault: false
-      }
-    ],
-    notes: [
-      {
-        id: "n1",
-        title: "My First Note",
-        content: "This is my note content...",
-        folderId: "f1",
-        createdAt: "2024-01-15T10:30:00.000Z",
-        updatedAt: "2024-01-15T10:30:00.000Z",
-        pinned: false
-      }
-    ],
-    settings: {
-      theme: "dark",
-      createdAt: "2024-01-15T10:00:00.000Z"
-    }
-  }
-}
-```
 
 ## 🎨 Themes
 
 The application supports two beautiful themes:
 
-### Dark Theme (Black & White)
+### Dark Theme 
 - Pure black background (#0A0A0A)
 - White text and accents
 - High contrast, minimalist
 - Easy on the eyes in low light
 
-### Light Theme (White + Yellow)
+### Light Theme
 - Off-white background (#FAFAFA)
 - Yellow accents (#FACC15)
 - Warm, clean aesthetic
@@ -218,16 +161,6 @@ User B enters: "blue-panther-life"
 The hashes are different, so the data is completely isolated!
 ```
 
-## 🚀 Deployment to Vercel
-
-This project is ready to deploy to Vercel:
-
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Vercel will automatically detect it's a Vite project
-4. Deploy!
-
-The app uses localStorage, so it works client-side without needing a separate backend server.
 
 ## 📝 Features
 
