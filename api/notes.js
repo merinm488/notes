@@ -25,6 +25,7 @@ function generateId() {
  */
 async function getUserData(hash) {
   try {
+    console.log(`[TEXTDB GET] Fetching hash: ${hash}`);
     const response = await fetch(`${TEXTDB_API_BASE}/${hash}`, {
       method: 'GET',
       headers: {
@@ -32,23 +33,29 @@ async function getUserData(hash) {
       }
     });
 
+    console.log(`[TEXTDB GET] Response status: ${response.status}`);
     if (!response.ok) {
       if (response.status === 404) {
+        console.log(`[TEXTDB GET] User not found (404)`);
         return null;
       }
       throw new Error(`Failed to fetch data: ${response.status}`);
     }
 
     const text = await response.text();
+    console.log(`[TEXTDB GET] Response text length: ${text?.length}, content: ${text?.substring(0, 100)}`);
 
     // textdb.dev returns default content for non-existent keys
     if (!text || text.trim() === '' || text.includes('hello world from textdb')) {
+      console.log(`[TEXTDB GET] Default/empty content, returning null`);
       return null;
     }
 
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    console.log(`[TEXTDB GET] Parsed user data with ${parsed.notes?.length || 0} notes`);
+    return parsed;
   } catch (error) {
-    console.error('Error reading user data from textdb.dev:', error);
+    console.error('[TEXTDB GET] Error reading user data:', error);
     return null;
   }
 }
@@ -61,6 +68,7 @@ async function getUserData(hash) {
  */
 async function saveUserData(hash, userData) {
   try {
+    console.log(`[TEXTDB POST] Saving hash: ${hash} with ${JSON.stringify(userData).length} bytes`);
     const response = await fetch(`${TEXTDB_API_BASE}/${hash}`, {
       method: 'POST',
       headers: {
@@ -70,13 +78,18 @@ async function saveUserData(hash, userData) {
       body: JSON.stringify(userData)
     });
 
+    console.log(`[TEXTDB POST] Response status: ${response.status}, ok: ${response.ok}`);
     if (!response.ok) {
+      const responseText = await response.text();
+      console.error(`[TEXTDB POST] Error response: ${responseText}`);
       throw new Error(`Failed to save data: ${response.status}`);
     }
 
+    const responseText = await response.text();
+    console.log(`[TEXTDB POST] Response: ${responseText?.substring(0, 100)}`);
     return true;
   } catch (error) {
-    console.error('Error saving user data to textdb.dev:', error);
+    console.error('[TEXTDB POST] Error saving user data:', error);
     return false;
   }
 }
@@ -127,6 +140,8 @@ export async function POST(request) {
     const body = await request.json();
     const { key, action } = body;
 
+    console.log(`[API POST] Action: ${action}, Key: ${key}`);
+
     if (!key) {
       return Response.json({ error: 'Key is required' }, { status: 400 });
     }
@@ -140,20 +155,26 @@ export async function POST(request) {
       .replace(/-+/g, '-');
     const parts = normalizedKey.split('-');
 
+    console.log(`[API POST] Normalized key: ${normalizedKey}, Parts: ${parts.join(', ')}`);
+
     if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-z]+$/.test(p))) {
       return Response.json({ error: 'Invalid key format' }, { status: 400 });
     }
 
     const hash = generateHash(normalizedKey);
+    console.log(`[API POST] Generated hash: ${hash}`);
 
     // Handle login action
     if (action === 'login') {
+      console.log(`[API POST] Handling login for hash: ${hash}`);
       const userData = await getUserData(hash);
 
       if (!userData) {
+        console.log(`[API POST] Login failed - user not found`);
         return Response.json({ error: 'User not found' }, { status: 404 });
       }
 
+      console.log(`[API POST] Login successful`);
       return Response.json({
         success: true,
         hash,
@@ -162,8 +183,10 @@ export async function POST(request) {
     }
 
     // Handle account creation (default or explicit create action)
+    console.log(`[API POST] Handling account creation for hash: ${hash}`);
     // Check if user already exists
     const exists = await userExists(hash);
+    console.log(`[API POST] User exists check: ${exists}`);
     if (exists) {
       return Response.json({ error: 'User already exists', code: 'USER_EXISTS' }, { status: 409 });
     }
@@ -185,8 +208,15 @@ export async function POST(request) {
       }
     };
 
+    console.log(`[API POST] Creating new user with hash: ${hash}`);
     const saved = await saveUserData(hash, newUserData);
+    console.log(`[API POST] Save result: ${saved}`);
     if (saved) {
+      // Verify the save by immediately reading back
+      console.log(`[API POST] Verifying save by reading back...`);
+      const verifyData = await getUserData(hash);
+      console.log(`[API POST] Verification result: ${verifyData ? 'SUCCESS' : 'FAILED'}`);
+
       return Response.json({
         success: true,
         hash,
@@ -196,6 +226,7 @@ export async function POST(request) {
       return Response.json({ error: 'Failed to create account' }, { status: 500 });
     }
   } catch (error) {
+    console.error('[API POST] Error:', error);
     return Response.json({ error: 'Server error' }, { status: 500 });
   }
 }
