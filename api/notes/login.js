@@ -36,7 +36,8 @@ async function getUserData(hash) {
 
     const text = await response.text();
 
-    if (!text || text.trim() === '') {
+    // textdb.dev returns default content for non-existent keys
+    if (!text || text.trim() === '' || text.includes('hello world from textdb')) {
       return null;
     }
 
