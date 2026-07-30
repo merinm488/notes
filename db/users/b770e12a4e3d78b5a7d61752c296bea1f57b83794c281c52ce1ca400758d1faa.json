@@ -1,0 +1,26 @@
+{
+  "folders": [
+    {
+      "id": "ms7amaqleyh3a9npxml",
+      "name": "All Notes",
+      "color": "#FACC15",
+      "isDefault": true
+    }
+  ],
+  "notes": [
+    {
+      "id": "ms7axhzp4t7goe4jk9u",
+      "title": "test",
+      "content": "xzx",
+      "folderId": "ms78rninpph3229vg4",
+      "createdAt": "2026-07-30T09:18:57.877Z",
+      "updatedAt": "2026-07-30T09:18:57.877Z",
+      "pinned": false,
+      "archived": false
+    }
+  ],
+  "settings": {
+    "theme": "dark",
+    "createdAt": "2026-07-30T09:10:15.262Z"
+  }
+}

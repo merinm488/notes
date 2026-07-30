@@ -1,0 +1,2 @@
+# This directory stores TextDB JSON files
+# Each user's data is stored as: {hash}.json

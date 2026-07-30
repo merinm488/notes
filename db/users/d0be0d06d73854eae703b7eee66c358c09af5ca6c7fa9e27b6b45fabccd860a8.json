@@ -1,0 +1,26 @@
+{
+  "folders": [
+    {
+      "id": "ms78ta2r1c5kgc7rtq8",
+      "name": "All Notes",
+      "color": "#FACC15",
+      "isDefault": true
+    }
+  ],
+  "notes": [
+    {
+      "id": "ms78th69s4mgyy3256l",
+      "title": "test drive",
+      "content": "testing",
+      "folderId": "ms6xqo1na8da9qoeqbt",
+      "createdAt": "2026-07-30T08:19:50.961Z",
+      "updatedAt": "2026-07-30T08:19:50.961Z",
+      "pinned": false,
+      "archived": false
+    }
+  ],
+  "settings": {
+    "theme": "dark",
+    "createdAt": "2026-07-30T08:19:41.763Z"
+  }
+}
