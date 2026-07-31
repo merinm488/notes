@@ -123,14 +123,10 @@ app.get('/api/notes', (req, res) => {
  */
 app.post('/api/notes', (req, res) => {
   try {
-    const { key, name, action } = req.body;
+    const { key, action } = req.body;
 
     if (!key) {
       return res.status(400).json({ error: 'Key is required' });
-    }
-
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ error: 'Name is required' });
     }
 
     // Normalize key
@@ -151,13 +147,6 @@ app.post('/api/notes', (req, res) => {
 
       if (!userData) {
         return res.status(404).json({ error: 'User not found' });
-      }
-
-      // Validate name matches
-      const storedName = userData.settings?.name?.toLowerCase();
-      const providedName = name.trim().toLowerCase();
-      if (storedName && storedName !== providedName) {
-        return res.status(401).json({ error: 'Name does not match our records' });
       }
 
       // Return hash and user data
@@ -186,7 +175,6 @@ app.post('/api/notes', (req, res) => {
       ],
       notes: [],
       settings: {
-        name: name.trim(),
         theme: 'dark',
         createdAt: new Date().toISOString()
       }

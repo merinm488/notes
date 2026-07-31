@@ -13,12 +13,11 @@ export function useAuth() {
   const [errorCode, setErrorCode] = useState(null);
 
   /**
-   * Login with a three-word key and name (existing account only)
+   * Login with a three-word key (existing account only)
    * @param {string} key - The three-word key
-   * @param {string} name - The user's name
    * @returns {Promise<Object>} - Login result { success, error }
    */
-  const login = useCallback(async (key, name) => {
+  const login = useCallback(async (key) => {
     setIsLoading(true);
     setError(null);
     setErrorCode(null);
@@ -33,11 +32,11 @@ export function useAuth() {
         return { success: false, error: 'Invalid key format' };
       }
 
-      // Send the key and name to server for hashing and authentication
+      // Send the key to server for hashing and authentication
       const response = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: normalizedKey, name, action: 'login' })
+        body: JSON.stringify({ key: normalizedKey, action: 'login' })
       });
 
       const data = await response.json();
@@ -57,7 +56,6 @@ export function useAuth() {
       setUserHash(data.hash);
       setIsAuthenticated(true);
       sessionStorage.setItem('secure_notes_hash', data.hash);
-      sessionStorage.setItem('secure_notes_name', data.data?.settings?.name || name);
 
       setIsLoading(false);
       return {
@@ -74,12 +72,11 @@ export function useAuth() {
   }, []);
 
   /**
-   * Create a new account with a three-word key and name
+   * Create a new account with a three-word key
    * @param {string} key - The three-word key
-   * @param {string} name - The user's name
    * @returns {Promise<Object>} - Creation result { success, error }
    */
-  const createAccount = useCallback(async (key, name) => {
+  const createAccount = useCallback(async (key) => {
     setIsLoading(true);
     setError(null);
     setErrorCode(null);
@@ -98,7 +95,7 @@ export function useAuth() {
       const response = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: normalizedKey, name })
+        body: JSON.stringify({ key: normalizedKey, action: 'create' })
       });
 
       const data = await response.json();
@@ -119,7 +116,6 @@ export function useAuth() {
       setUserHash(data.hash);
       setIsAuthenticated(true);
       sessionStorage.setItem('secure_notes_hash', data.hash);
-      sessionStorage.setItem('secure_notes_name', name);
 
       setIsLoading(false);
       return {

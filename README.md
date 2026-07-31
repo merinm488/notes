@@ -24,6 +24,10 @@ This is a **full-stack application** with:
 - **Production**: Vercel serverless functions with TextDB.dev integration
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 847651e (refactor: remove name field from authentication)
 
 ## 🏗️ Project Structure
 
@@ -93,10 +97,10 @@ Notes/
 
 ### Account Creation Flow
 
-1. **User provides key**: Key
-2. **Server validates**: Key format and non-empty name
+1. **User provides key**: Key required
+2. **Server validates**: Key format
 3. **Hash generated**: SHA-256 of normalized key
-4. **Account created**: New user stored with key→hash mapping and name
+4. **Account created**: New user stored with key→hash mapping
 5. **Response**: Success with hash for immediate login
 
 ### Key Security Features
@@ -173,7 +177,10 @@ The application supports two beautiful themes:
 - ✅ Simple REST API integration
 - ✅ Free for basic usage
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 847651e (refactor: remove name field from authentication)
 **For High-Scale Production:** Consider upgrading to:
 - **Vercel Postgres** - Managed PostgreSQL
 - **Supabase** - Full-featured backend with auth
@@ -195,4 +202,8 @@ MIT License - feel free to use this for learning and building.
 
 ---
 
+<<<<<<< HEAD
 **Note:** This application uses TextDB.dev for production data persistence. All notes are stored securely with SHA-256 hashed keys.
+=======
+**Note:** This application uses TextDB.dev for production data persistence. All notes are stored securely with SHA-256 hashed keys.
+>>>>>>> 847651e (refactor: remove name field from authentication)
