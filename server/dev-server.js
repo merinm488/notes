@@ -168,6 +168,7 @@ app.post('/api/notes', (req, res) => {
       });
     }
 
+    // Handle account creation (default or explicit create action)
     // Check if user already exists
     if (userExists(hash)) {
       return res.status(409).json({ error: 'User already exists', code: 'USER_EXISTS' });

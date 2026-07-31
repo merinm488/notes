@@ -386,19 +386,17 @@ function App() {
                   </button>
 
                   {/* Desktop/tablet sidebar toggle button */}
-                  <Tooltip text={showSidebar ? 'Hide sidebar' : 'Show sidebar'}>
-                    <button
-                      onClick={() => setShowSidebar(!showSidebar)}
-                      className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-700 items-center justify-center transition-all duration-200"
-                      aria-label={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
-                    >
-                      <div className={`transition-transform duration-200 ${showSidebar ? '' : 'rotate-180'}`}>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                      </div>
-                    </button>
-                  </Tooltip>
+                  <button
+                    onClick={() => setShowSidebar(!showSidebar)}
+                    className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-700 items-center justify-center transition-all duration-200"
+                    aria-label={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+                  >
+                    <div className={`transition-transform duration-200 ${showSidebar ? '' : 'rotate-180'}`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                      </svg>
+                    </div>
+                  </button>
 
                   {/* Search - desktop/tablet */}
                   <div className="hidden lg:block flex-1 max-w-md mx-4 min-w-0">

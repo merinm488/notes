@@ -48,9 +48,9 @@ export function UserDisplay({ userHash, onLogout }) {
         </div>
       </button>
 
-      {/* Dropdown menu - appears above to avoid viewport issues */}
+      {/* Dropdown menu - appears centered above the icon */}
       {showInfo && (
-        <div className="absolute right-0 bottom-full mb-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 z-50">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 z-50">
           {/* Logout button */}
           <button
             onClick={onLogout}

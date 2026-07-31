@@ -4,7 +4,7 @@ A modern, full-stack notes application with passwordless authentication using th
 
 ## ✨ Features
 
-- 🔐 **Passwordless Authentication** - Secure login using three-word keys
+- 🔐 **Two-Factor Authentication** - Secure login using three-word keys + name verification
 - 📝 **Rich Note Management** - Create, edit, delete, and archive notes
 - 📁 **Folder Organization** - Organize notes into color-coded folders
 - 🔍 **Full-Text Search** - Search across all your notes instantly
@@ -12,15 +12,16 @@ A modern, full-stack notes application with passwordless authentication using th
 - 🌙 **Dark & Light Themes** - Beautiful, high-contrast themes
 - 📱 **Fully Responsive** - Works seamlessly on mobile, tablet, and desktop
 - ⚡ **Fast & Lightweight** - Built with Vite for instant loading
+- 🔒 **Secure PWA** - Service worker only caches static assets, never sensitive data
 
 ## 🏗️ Architecture
 
 This is a **full-stack application** with:
 
 - **Frontend**: React + Vite + Tailwind CSS
-- **Backend**: TextDB (JSON file storage via REST API)
-- **Dev Server**: Express for local development
-- **Production**: Vercel serverless functions
+- **Backend**: TextDB.dev external API for data persistence
+- **Dev Server**: Express for local development with JSON file storage
+- **Production**: Vercel serverless functions with TextDB.dev integration
 
 ## 🚀 Getting Started
 
@@ -75,8 +76,7 @@ Notes/
 │   ├── main.jsx             # React entry point
 │   └── index.css            # Global styles
 ├── api/
-│   └── notes/
-│       └── route.js         # Vercel serverless API
+│   └── notes.js              # Vercel serverless API
 ├── server/
 │   └── dev-server.js        # Express dev server
 ├── db/
@@ -92,7 +92,7 @@ Notes/
 
 ### The Login Flow
 
-1. **User enters key**: `"yellow-lily-flies"`
+1. **User enters key and name**: Key: `"yellow-lily-flies"`, Name: `"John"`
 
 2. **Key is normalized**: Converted to lowercase, hyphens normalized
    ```
@@ -104,24 +104,43 @@ Notes/
    "yellow-lily-flies" → "a7f8c2e9b4d3f1a6c8e5b2d9f4a7c1e8..."
    ```
 
-4. **Database lookup**: Search for the hash in database
+4. **Database lookup**: Search for the hash in TextDB.dev
    ```
-   db/users/a7f8c2e9b4d3f1a6c8e5b2d9f4a7c1e8.json → { notes: [...], folders: [...] }
+   GET https://textdb.dev/api/data/a7f8c2e9b4d3f1a6c8e5b2d9f4a7c1e8
+   → { notes: [...], folders: [...], settings: { name: "john" } }
    ```
 
-5. **Result**:
-   - Found → User logged in, data returned
-   - Not found → New account created
+5. **Name verification**: Provided name must match stored name
+   ```
+   "John" (normalized) === "john" (stored) ✅
+   ```
+
+6. **Result**:
+   - Found + name matches → User logged in, data returned
+   - Found + name mismatch → 401 Unauthorized
+   - Not found → Account not found (use account creation)
+
+### Account Creation Flow
+
+1. **User provides key and name**: Key + Name required
+2. **Server validates**: Key format and non-empty name
+3. **Hash generated**: SHA-256 of normalized key
+4. **Account created**: New user stored with key→hash mapping and name
+5. **Response**: Success with hash for immediate login
 
 ### Key Security Features
+
+✅ **Two-factor authentication** - Requires both key AND matching name
 
 ✅ **Original key never stored** - Only the hash exists in the database
 
 ✅ **Hash is one-way** - Cannot reverse the hash to get the original key
 
-✅ **Same key = same hash** - Consistent identification
+✅ **Name verification** - Prevents key brute-force attacks
 
 ✅ **Data isolation** - Different keys produce completely different hashes
+
+✅ **No sensitive PWA caching** - Service worker only caches static assets
 
 ## 📊 Data Structure
 
@@ -189,24 +208,32 @@ This starts both the Express API server (port 3003) and Vite dev server (port 30
 
 ### Deploy to Vercel
 
-**⚠️ Important Note:** The current backend uses TextDB (JSON file storage), which **will not persist data on Vercel** due to serverless function limitations.
+The production version uses **TextDB.dev** external service which **does persist data** across serverless function invocations.
 
-For production use, you need to migrate to a proper database:
-- **Vercel Postgres** - Managed PostgreSQL
-- **Supabase** - Firebase alternative
-- **MongoDB Atlas** - NoSQL document database
-
-To deploy anyway (for testing):
+**To deploy:**
 
 1. Push code to GitHub
 2. Import project in [Vercel](https://vercel.com)
 3. Deploy with default settings
 
-The app will work, but notes will not persist after each serverless function execution.
+Your notes will be stored securely on TextDB.dev and persist across deployments.
 
-### Migrating to a Real Database
+### Backend Storage Options
 
-To make notes persist, update `api/notes/route.js` to use a real database instead of JSON file storage.
+**Current (Production):** TextDB.dev
+- ✅ Data persists across serverless invocations
+- ✅ Simple REST API integration
+- ✅ Free for basic usage
+
+**Local Development:** JSON files in `db/users/` directory
+- ✅ Easy local development
+- ✅ No external dependencies
+- ✅ Data persists locally
+
+**For High-Scale Production:** Consider upgrading to:
+- **Vercel Postgres** - Managed PostgreSQL
+- **Supabase** - Full-featured backend with auth
+- **MongoDB Atlas** - NoSQL document database
 
 ## 🛠️ Built With
 
@@ -215,7 +242,8 @@ To make notes persist, update `api/notes/route.js` to use a real database instea
 - **Tailwind CSS** - Styling
 - **Express** - Development API server
 - **Web Crypto API** - Cryptographic hashing
-- **TextDB** - JSON file storage (local dev only)
+- **TextDB.dev** - External data storage (production)
+- **VitePWA** - Progressive Web App with secure asset caching
 
 ## 📄 License
 
@@ -223,4 +251,4 @@ MIT License - feel free to use this for learning and building.
 
 ---
 
-**Note:** This is a demonstration project. The current backend implementation (TextDB) is suitable for local development only. For production use, migrate to a proper database service.
+**Note:** This application uses TextDB.dev for production data persistence. All notes are stored securely with SHA-256 hashed keys and two-factor authentication (key + name verification).

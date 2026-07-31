@@ -55,6 +55,12 @@ async function getUserData(hash) {
     let parsed;
     try {
       parsed = JSON.parse(text);
+      // textdb.dev sometimes returns JSON-encoded strings (double-encoded)
+      // If we got a string, parse it again
+      if (typeof parsed === 'string') {
+        console.log(`[TEXTDB GET] Got string, parsing again...`);
+        parsed = JSON.parse(parsed);
+      }
     } catch (parseError) {
       console.error(`[TEXTDB GET] JSON parse error: ${parseError.message}`);
       return null;
