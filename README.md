@@ -1,10 +1,10 @@
-# Secure Notes Application
+# Notes Application
 
 A modern, full-stack notes application with passwordless authentication using three-word keys. Features a beautiful UI with dark/light themes, folder organization, search, and pinning functionality.
 
 ## ✨ Features
 
-- 🔐 **Two-Factor Authentication** - Secure login using three-word keys + name verification
+- 🔐 **Passwordless Authentication** - Secure login using three-word keys
 - 📝 **Rich Note Management** - Create, edit, delete, and archive notes
 - 📁 **Folder Organization** - Organize notes into color-coded folders
 - 🔍 **Full-Text Search** - Search across all your notes instantly
@@ -23,30 +23,7 @@ This is a **full-stack application** with:
 - **Dev Server**: Express for local development with JSON file storage
 - **Production**: Vercel serverless functions with TextDB.dev integration
 
-## 🚀 Getting Started
 
-### Prerequisites
-- Node.js 16+ installed
-- npm or yarn package manager
-
-### Installation
-
-1. Navigate to the project directory:
-```bash
-cd Notes
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-4. Open your browser to `http://localhost:3002`
 
 ## 🏗️ Project Structure
 
@@ -92,7 +69,7 @@ Notes/
 
 ### The Login Flow
 
-1. **User enters key and name**: Key: `"yellow-lily-flies"`, Name: `"John"`
+1. **User enters key**: Key: `"yellow-lily-flies"`
 
 2. **Key is normalized**: Converted to lowercase, hyphens normalized
    ```
@@ -110,19 +87,13 @@ Notes/
    → { notes: [...], folders: [...], settings: { name: "john" } }
    ```
 
-5. **Name verification**: Provided name must match stored name
-   ```
-   "John" (normalized) === "john" (stored) ✅
-   ```
-
-6. **Result**:
-   - Found + name matches → User logged in, data returned
-   - Found + name mismatch → 401 Unauthorized
+5. **Result**:
+   - Found → User logged in, data returned
    - Not found → Account not found (use account creation)
 
 ### Account Creation Flow
 
-1. **User provides key and name**: Key + Name required
+1. **User provides key**: Key
 2. **Server validates**: Key format and non-empty name
 3. **Hash generated**: SHA-256 of normalized key
 4. **Account created**: New user stored with key→hash mapping and name
@@ -130,13 +101,11 @@ Notes/
 
 ### Key Security Features
 
-✅ **Two-factor authentication** - Requires both key AND matching name
+✅ **Passwordless authentication** - Requires key
 
 ✅ **Original key never stored** - Only the hash exists in the database
 
 ✅ **Hash is one-way** - Cannot reverse the hash to get the original key
-
-✅ **Name verification** - Prevents key brute-force attacks
 
 ✅ **Data isolation** - Different keys produce completely different hashes
 
@@ -196,27 +165,6 @@ The application supports two beautiful themes:
 - Warm, inviting aesthetic
 - Great for daytime use
 
-## 🚀 Deployment
-
-### Local Development
-
-```bash
-npm run dev
-```
-
-This starts both the Express API server (port 3003) and Vite dev server (port 3002).
-
-### Deploy to Vercel
-
-The production version uses **TextDB.dev** external service which **does persist data** across serverless function invocations.
-
-**To deploy:**
-
-1. Push code to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Deploy with default settings
-
-Your notes will be stored securely on TextDB.dev and persist across deployments.
 
 ### Backend Storage Options
 
@@ -225,10 +173,6 @@ Your notes will be stored securely on TextDB.dev and persist across deployments.
 - ✅ Simple REST API integration
 - ✅ Free for basic usage
 
-**Local Development:** JSON files in `db/users/` directory
-- ✅ Easy local development
-- ✅ No external dependencies
-- ✅ Data persists locally
 
 **For High-Scale Production:** Consider upgrading to:
 - **Vercel Postgres** - Managed PostgreSQL
@@ -251,4 +195,4 @@ MIT License - feel free to use this for learning and building.
 
 ---
 
-**Note:** This application uses TextDB.dev for production data persistence. All notes are stored securely with SHA-256 hashed keys and two-factor authentication (key + name verification).
+**Note:** This application uses TextDB.dev for production data persistence. All notes are stored securely with SHA-256 hashed keys.
