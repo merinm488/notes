@@ -177,16 +177,15 @@ export async function POST(request) {
 
     // Normalize key (same as frontend)
     const normalizedKey = key
-      .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
-      .replace(/[^a-z-]/g, '')
+      .replace(/[^a-zA-Z-]/g, '')
       .replace(/-+/g, '-');
     const parts = normalizedKey.split('-');
 
     console.log(`[API POST] Normalized key: ${normalizedKey}, Parts: ${parts.join(', ')}`);
 
-    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-z]+$/.test(p))) {
+    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-zA-Z]+$/.test(p))) {
       return Response.json({ error: 'Invalid key format' }, { status: 400 });
     }
 

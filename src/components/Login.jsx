@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { generateRandomKey } from '../lib/wordlist';
 import { normalizeKey } from '../lib/cryptoUtils';
 
@@ -6,75 +6,97 @@ import { normalizeKey } from '../lib/cryptoUtils';
  * Login Component
  *
  * This is the entry point for the application.
- * Users can either:
- * 1. Enter an existing three-word key to login
- * 2. Generate a random key for a new account
- * 3. Manually create their own key
+ * Users enter their three-word key - if it doesn't exist, they can create a new account.
  */
 export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode }) {
   const [keyInput, setKeyInput] = useState('');
-  const [mode, setMode] = useState('existing'); // 'existing' or 'new'
-  const [showCustom, setShowCustom] = useState(false);
-  const [suggestedKey, setSuggestedKey] = useState('');
   const [wasLoading, setWasLoading] = useState(false);
+  const [showCreatePrompt, setShowCreatePrompt] = useState(false);
+  const [pendingKey, setPendingKey] = useState(null);
+  const [userDismissedPrompt, setUserDismissedPrompt] = useState(false);
+  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
+  const [isGeneratedKey, setIsGeneratedKey] = useState(false);
 
   // Clear key input after successful login/account creation
   useEffect(() => {
     if (wasLoading && !isLoading) {
-      // Operation completed - clear the key for security
-      setKeyInput('');
+      // Operation completed - clear the key for security and reset state
+      // Only clear if it was successful (no error)
+      if (!error) {
+        setKeyInput('');
+      }
+      setShowCreatePrompt(false);
+      setPendingKey(null);
+      setUserDismissedPrompt(false);
     }
     setWasLoading(isLoading);
-  }, [isLoading]);
+  }, [isLoading, error]);
+
+  // Show create prompt when USER_NOT_FOUND error occurs (only if user hasn't dismissed)
+  useEffect(() => {
+    if (errorCode === 'USER_NOT_FOUND' && keyInput && !isLoading && !userDismissedPrompt) {
+      setShowCreatePrompt(true);
+      setPendingKey(normalizeKey(keyInput.trim()));
+      setIsGeneratedKey(false); // Manual entry, not generated
+    } else if (!error || errorCode !== 'USER_NOT_FOUND') {
+      // Only clear prompt if error is completely gone or is a different error
+      if (!error) {
+        setShowCreatePrompt(false);
+        setPendingKey(null);
+        setUserDismissedPrompt(false);
+        setIsGeneratedKey(false);
+      }
+    }
+  }, [errorCode, error, keyInput, isLoading, userDismissedPrompt]);
 
   /**
-   * Handle login form submission (existing users only)
+   * Handle login form submission
    */
   const handleLogin = (e) => {
     e.preventDefault();
     if (keyInput.trim()) {
+      // Reset dismissed flag when user explicitly submits
+      setUserDismissedPrompt(false);
       // Normalize the key before sending to server
       onLogin(normalizeKey(keyInput.trim()));
     }
   };
 
   /**
-   * Handle create account form submission (new users)
+   * Handle "Yes" - Create account with the entered key
    */
-  const handleCreateAccount = (e) => {
-    e.preventDefault();
-    if (keyInput.trim()) {
-      // Normalize the key before sending to server
-      onCreateAccount(normalizeKey(keyInput.trim()));
+  const handleCreateAccount = useCallback(() => {
+    if (pendingKey) {
+      onCreateAccount(pendingKey);
     }
-  };
+  }, [pendingKey, onCreateAccount]);
 
   /**
-   * Generate a random key for new account
+   * Handle "No" - Allow user to edit the key
+   */
+  const handleEditKey = useCallback(() => {
+    setShowCreatePrompt(false);
+    setPendingKey(null);
+    setUserDismissedPrompt(true);
+  }, []);
+
+  /**
+   * Generate a random key
    */
   const handleGenerateKey = () => {
     const randomKey = generateRandomKey();
     setKeyInput(randomKey);
-    setSuggestedKey(randomKey);
-    setShowCustom(true);
-    setMode('new');
-  };
-
-  /**
-   * Handle custom key creation
-   */
-  const handleCustomKey = () => {
-    setShowCustom(true);
-    setMode('new');
+    setPendingKey(randomKey);
+    setIsGeneratedKey(true);
+    setShowCreatePrompt(true);
+    setUserDismissedPrompt(false);
   };
 
   /**
    * Format key for display (with word-spacing)
    */
   const formatKeyDisplay = (key) => {
-    return key.split('-').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' — ');
+    return key.split('-').join(' — ');
   };
 
   return (
@@ -101,88 +123,113 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
 
         {/* Login Card */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 animate-slide-up">
-          {/* Mode Toggle */}
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => {
-                setMode('existing');
-                setShowCustom(false);
-              }}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                mode === 'existing' && !showCustom
-                  ? 'bg-yellow-500 text-black dark:bg-white dark:text-black'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              }`}
-            >
-              Existing Key
-            </button>
-            <button
-              onClick={() => {
-                setMode('new');
-                setShowCustom(false);
-              }}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                mode === 'new' && !showCustom
-                  ? 'bg-yellow-500 text-black dark:bg-white dark:text-black'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              }`}
-            >
-              New Account
-            </button>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className={`mb-4 p-3 rounded-lg border ${
-              errorCode === 'USER_NOT_FOUND'
-                ? 'bg-yellow-400/10 border-yellow-400/20'
-                : 'bg-red-500/10 border-red-500/20'
-            }`}>
-              <p className={`text-sm ${
-                errorCode === 'USER_NOT_FOUND'
-                  ? 'text-yellow-600 dark:text-yellow-400'
-                  : 'text-red-500'
-              }`}>
-                {error}
-              </p>
-
-              {/* Show "Create Account" option when user not found */}
-              {errorCode === 'USER_NOT_FOUND' && keyInput && (
-                <div className="mt-3 pt-3 border-t border-yellow-400/20">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    Want to create a new account with this key?
+          {/* Create Account Prompt */}
+          {showCreatePrompt ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-yellow-400/20 bg-yellow-400/10">
+                {!isGeneratedKey && (
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-1">
+                    No account found with this key.
                   </p>
-                  <button
-                    onClick={() => onCreateAccount(normalizeKey(keyInput))}
-                    disabled={isLoading}
-                    className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium w-full disabled:opacity-50"
-                  >
-                    {isLoading ? 'Creating...' : 'Create New Account'}
-                  </button>
+                )}
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Create a new account with this key?
+                </p>
+                {pendingKey && (
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    {formatKeyDisplay(pendingKey)}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEditKey}
+                  disabled={isLoading}
+                  className="flex-1 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-medium border border-gray-200 dark:border-gray-700 disabled:opacity-50"
+                >
+                  No
+                </button>
+                <button
+                  onClick={handleCreateAccount}
+                  disabled={isLoading}
+                  className="flex-1 bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium disabled:opacity-50 hover:bg-yellow-600 dark:hover:bg-gray-200"
+                >
+                  {isLoading ? 'Creating...' : 'Yes'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Normal Login Form */
+            <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
+              {/* Error Message (non-user-not-found errors) */}
+              {error && errorCode !== 'USER_NOT_FOUND' && (
+                <div className="mb-4 p-3 rounded-lg border bg-red-500/10 border-red-500/20">
+                  <p className="text-sm text-red-500">
+                    {error}
+                  </p>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Existing Key Mode */}
-          {mode === 'existing' && !showCustom ? (
-            <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
               <div>
                 <label htmlFor="key" className="block text-sm font-medium mb-2">
                   Enter your Key
                 </label>
-                <input
-                  id="key"
-                  type="text"
-                  name="login-key"
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder="Ex: sky-fill-cycle"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-yellow-500 [&::placeholder]:italic"
-                  disabled={isLoading}
-                  autoFocus
-                  autoComplete="off"
-                />
+                <div className="relative">
+                  <input
+                    id="key"
+                    type="text"
+                    name="login-key"
+                    value={keyInput}
+                    onChange={(e) => {
+                      setKeyInput(e.target.value);
+                    }}
+                    placeholder="Ex: Sky-Fill-Cycle"
+                    className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-yellow-500 [&::placeholder]:italic"
+                    disabled={isLoading}
+                    autoFocus
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowHelpTooltip(!showHelpTooltip)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+
+                  {/* Help Tooltip */}
+                  {showHelpTooltip && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-gray-900 dark:bg-gray-700 text-white text-sm rounded-lg shadow-lg z-10 p-3">
+                      <p className="font-medium mb-2">Key Format:</p>
+                      <ul className="space-y-1 text-gray-300 dark:text-gray-300">
+                        <li className="flex items-start gap-2">
+                          <span className="text-yellow-500 mt-0.5">•</span>
+                          <span>Three words separated by hyphens</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-yellow-500 mt-0.5">•</span>
+                          <span>Each word must be at least 2 letters</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-yellow-500 mt-0.5">•</span>
+                          <span>Letters only (case-sensitive)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-yellow-500 mt-0.5">•</span>
+                          <span>Example: <code className="bg-gray-800 dark:bg-gray-800 px-1.5 py-0.5 rounded text-yellow-400">Sky-Fill-Cycle</code></span>
+                        </li>
+                      </ul>
+                      {/* Arrow */}
+                      <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 dark:bg-gray-700 transform rotate-45"></div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button
@@ -193,29 +240,7 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleCustomKey}
-                  className="text-sm text-yellow-600 dark:text-yellow-400 hover:underline"
-                >
-                  Create custom key instead
-                </button>
-              </div>
-            </form>
-          ) : mode === 'new' && !showCustom ? (
-            <div className="space-y-4">
-              <div className="text-center py-6">
-                <button
-                  onClick={handleGenerateKey}
-                  disabled={isLoading}
-                  className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium w-full disabled:opacity-50 hover:bg-yellow-600 dark:hover:bg-gray-200"
-                >
-                  {isLoading ? 'Creating...' : 'Generate Random Key'}
-                </button>
-              </div>
-
-              <div className="relative my-6">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                 </div>
@@ -227,52 +252,13 @@ export function Login({ onLogin, onCreateAccount, isLoading, error, errorCode })
               </div>
 
               <button
-                onClick={handleCustomKey}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-medium w-full"
+                type="button"
+                onClick={handleGenerateKey}
+                disabled={isLoading}
+                className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-medium disabled:opacity-50"
               >
-                Create My Own Key
+                Generate Random Key
               </button>
-            </div>
-          ) : (
-            /* Custom Key Mode */
-            <form onSubmit={handleCreateAccount} className="space-y-4" autoComplete="off">
-              <div>
-                <label htmlFor="customKey" className="block text-sm font-medium mb-2">
-                  Create Your Key
-                </label>
-                <input
-                  id="customKey"
-                  type="text"
-                  name="custom-key"
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder="your-words-here"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center tracking-wider focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  disabled={isLoading}
-                  autoFocus
-                  autoComplete="off"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCustom(false);
-                    setKeyInput('');
-                  }}
-                  className="bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-medium flex-1"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading || !keyInput}
-                  className="bg-yellow-500 text-black dark:bg-white dark:text-black px-4 py-2 rounded-lg font-medium flex-1 disabled:opacity-50 hover:bg-yellow-600 dark:hover:bg-gray-200"
-                >
-                  {isLoading ? 'Creating...' : 'Create Account'}
-                </button>
-              </div>
             </form>
           )}
         </div>

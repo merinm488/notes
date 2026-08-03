@@ -130,11 +130,11 @@ app.post('/api/notes', (req, res) => {
     }
 
     // Normalize key
-    const normalizedKey = key.toLowerCase().trim().replace(/\s+/g, '-');
+    const normalizedKey = key.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z-]/g, '').replace(/-+/g, '-');
     const parts = normalizedKey.split('-');
 
     // Validate key format
-    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-z]+$/.test(p))) {
+    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-zA-Z]+$/.test(p))) {
       return res.status(400).json({ error: 'Invalid key format' });
     }
 

@@ -161,7 +161,7 @@ export function isValidKey(key) {
 
   return parts.every(part =>
     part.length >= 2 &&
-    /^[a-z]+$/.test(part)
+    /^[a-zA-Z]+$/.test(part)
   );
 }
 
@@ -173,9 +173,8 @@ export function isValidKey(key) {
 export function normalizeKey(key) {
   if (!key) return '';
   return key
-    .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/[^a-z-]/g, '')
+    .replace(/[^a-zA-Z-]/g, '')
     .replace(/-+/g, '-');
 }
