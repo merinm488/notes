@@ -34,6 +34,8 @@ function App() {
     login,
     createAccount,
     logout,
+    deleteAccount,
+    getUserKey,
     checkSession
   } = useAuth();
 
@@ -311,7 +313,12 @@ function App() {
 
             {/* User info */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <UserDisplay userHash={userHash} onLogout={logout} />
+              <UserDisplay
+                userHash={userHash}
+                onLogout={logout}
+                onDeleteAccount={() => deleteAccount(userHash)}
+                onShowKey={getUserKey}
+              />
             </div>
           </div>
         </aside>

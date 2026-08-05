@@ -59,7 +59,7 @@ export default defineConfig({
     port: 3002,
     proxy: {
       '/api': {
-        target: 'http://192.168.0.101:3003',
+        target: 'http://localhost:3003',
         changeOrigin: true
       }
     }

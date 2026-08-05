@@ -56,6 +56,7 @@ export function useAuth() {
       setUserHash(data.hash);
       setIsAuthenticated(true);
       sessionStorage.setItem('secure_notes_hash', data.hash);
+      sessionStorage.setItem('secure_notes_key', normalizedKey);
 
       setIsLoading(false);
       return {
@@ -116,6 +117,7 @@ export function useAuth() {
       setUserHash(data.hash);
       setIsAuthenticated(true);
       sessionStorage.setItem('secure_notes_hash', data.hash);
+      sessionStorage.setItem('secure_notes_key', normalizedKey);
 
       setIsLoading(false);
       return {
@@ -138,6 +140,41 @@ export function useAuth() {
     setUserHash(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('secure_notes_hash');
+    sessionStorage.removeItem('secure_notes_key');
+  }, []);
+
+  /**
+   * Delete account - remove user data from server and clear session
+   * @param {string} hash - User's hash to delete
+   * @returns {Promise<Object>} - Deletion result { success, error }
+   */
+  const deleteAccount = useCallback(async (hash) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/notes?hash=${encodeURIComponent(hash)}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      // Clear local session and storage
+      setUserHash(null);
+      setIsAuthenticated(false);
+      sessionStorage.removeItem('secure_notes_hash');
+      sessionStorage.removeItem('secure_notes_key');
+
+      setIsLoading(false);
+      return { success: true, message: 'Account deleted successfully' };
+
+    } catch (err) {
+      setError('Failed to delete account. Please try again.');
+      setIsLoading(false);
+      return { success: false, error: err.message };
+    }
   }, []);
 
   /**
@@ -160,6 +197,14 @@ export function useAuth() {
     return false;
   }, []);
 
+  /**
+   * Get the stored user key
+   * @returns {string|null} - The user's key or null if not found
+   */
+  const getUserKey = useCallback(() => {
+    return sessionStorage.getItem('secure_notes_key');
+  }, []);
+
   return {
     userHash,
     isAuthenticated,
@@ -169,6 +214,8 @@ export function useAuth() {
     login,
     createAccount,
     logout,
-    checkSession
+    deleteAccount,
+    checkSession,
+    getUserKey
   };
 }
