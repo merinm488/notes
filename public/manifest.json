@@ -1,7 +1,7 @@
 {
   "name": "Secure Notes",
   "short_name": "Notes",
-  "description": "A secure notes application with passwordless authentication using three-word keys",
+  "description": "A secure notes application with passwordless authentication using custom keys",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

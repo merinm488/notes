@@ -39,7 +39,7 @@ async function apiRequest(endpoint, options = {}) {
 
 /**
  * Get user data by hash
- * @param {string} hash - The hashed three-word key
+ * @param {string} hash - The hashed key
  * @returns {Promise<Object|null>} - User data or null if not found
  */
 export async function getUserData(hash) {
@@ -56,7 +56,7 @@ export async function getUserData(hash) {
 
 /**
  * Create a new user account
- * @param {string} key - The three-word key (plain text)
+ * @param {string} key - The user's custom key (plain text)
  * @returns {Promise<Object>} - Creation result
  */
 export async function createUserData(key) {

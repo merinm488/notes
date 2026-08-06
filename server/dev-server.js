@@ -129,13 +129,12 @@ app.post('/api/notes', (req, res) => {
       return res.status(400).json({ error: 'Key is required' });
     }
 
-    // Normalize key
-    const normalizedKey = key.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z-]/g, '').replace(/-+/g, '-');
-    const parts = normalizedKey.split('-');
+    // Normalize key - just trim whitespace
+    const normalizedKey = key.trim();
 
-    // Validate key format
-    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-zA-Z]+$/.test(p))) {
-      return res.status(400).json({ error: 'Invalid key format' });
+    // Validate key is not empty
+    if (normalizedKey.length === 0) {
+      return res.status(400).json({ error: 'Key cannot be empty' });
     }
 
     // Generate hash on server

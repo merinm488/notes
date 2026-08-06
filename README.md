@@ -1,10 +1,10 @@
 # Notes Application
 
-A modern, full-stack notes application with passwordless authentication using three-word keys. Features a beautiful UI with dark/light themes, folder organization, search, and pinning functionality.
+A modern, full-stack notes application with passwordless authentication using custom keys. Features a beautiful UI with dark/light themes, folder organization, search, and pinning functionality.
 
 ## ✨ Features
 
-- 🔐 **Passwordless Authentication** - Secure login using three-word keys
+- 🔐 **Passwordless Authentication** - Secure login using custom keys
 - 📝 **Rich Note Management** - Create, edit, delete, and archive notes
 - 📁 **Folder Organization** - Organize notes into color-coded folders
 - 🔍 **Full-Text Search** - Search across all your notes instantly
@@ -22,12 +22,6 @@ This is a **full-stack application** with:
 - **Backend**: TextDB.dev external API for data persistence
 - **Dev Server**: Express for local development with JSON file storage
 - **Production**: Vercel serverless functions with TextDB.dev integration
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 847651e (refactor: remove name field from authentication)
 
 ## 🏗️ Project Structure
 

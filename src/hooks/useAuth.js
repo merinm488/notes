@@ -13,8 +13,8 @@ export function useAuth() {
   const [errorCode, setErrorCode] = useState(null);
 
   /**
-   * Login with a three-word key (existing account only)
-   * @param {string} key - The three-word key
+   * Login with a custom key (existing account only)
+   * @param {string} key - The user's custom key
    * @returns {Promise<Object>} - Login result { success, error }
    */
   const login = useCallback(async (key) => {
@@ -26,7 +26,7 @@ export function useAuth() {
       const normalizedKey = normalizeKey(key);
 
       if (!isValidKey(normalizedKey)) {
-        setError('Invalid key format. Use three words separated by hyphens (e.g., sky-fill-cycle)');
+        setError('Key cannot be empty');
         setErrorCode('INVALID_FORMAT');
         setIsLoading(false);
         return { success: false, error: 'Invalid key format' };
@@ -43,10 +43,9 @@ export function useAuth() {
 
       if (!response.ok) {
         if (response.status === 404) {
-          setError('No account found with this key');
-          setErrorCode('USER_NOT_FOUND');
+          // User doesn't exist - automatically create account
           setIsLoading(false);
-          return { success: false, error: 'No account found', code: 'USER_NOT_FOUND' };
+          return createAccount(key);
         }
 
         throw new Error(data.error || 'Login failed');
@@ -61,7 +60,8 @@ export function useAuth() {
       setIsLoading(false);
       return {
         success: true,
-        message: 'Welcome back!'
+        message: 'Welcome back!',
+        isNewAccount: false
       };
 
     } catch (err) {
@@ -73,8 +73,8 @@ export function useAuth() {
   }, []);
 
   /**
-   * Create a new account with a three-word key
-   * @param {string} key - The three-word key
+   * Create a new account with a custom key
+   * @param {string} key - The user's custom key
    * @returns {Promise<Object>} - Creation result { success, error }
    */
   const createAccount = useCallback(async (key) => {
@@ -86,7 +86,7 @@ export function useAuth() {
       const normalizedKey = normalizeKey(key);
 
       if (!isValidKey(normalizedKey)) {
-        setError('Invalid key format. Use three words separated by hyphens (e.g., sky-fill-cycle)');
+        setError('Key cannot be empty');
         setErrorCode('INVALID_FORMAT');
         setIsLoading(false);
         return { success: false, error: 'Invalid key format' };
@@ -122,7 +122,8 @@ export function useAuth() {
       setIsLoading(false);
       return {
         success: true,
-        message: 'Account created successfully!'
+        message: 'Account created successfully!',
+        isNewAccount: true
       };
 
     } catch (err) {

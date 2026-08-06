@@ -40,7 +40,7 @@ function App() {
   } = useAuth();
 
   // Theme state
-  const { theme, toggleTheme } = useTheme();
+  const { theme, systemTheme, setTheme, getEffectiveTheme } = useTheme();
 
   // Notes state
   const {
@@ -164,25 +164,27 @@ function App() {
 
   // ===== LOGIN SCREEN =====
   if (!isAuthenticated) {
+    const loginEffectiveTheme = getEffectiveTheme();
+
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className={`min-h-screen ${loginEffectiveTheme === 'dark' ? 'dark' : ''}`}>
         <Login
           onLogin={login}
-          onCreateAccount={createAccount}
           isLoading={authLoading}
           error={authError}
-          errorCode={errorCode}
         />
         <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <ThemeToggle theme={theme} systemTheme={systemTheme} onSetTheme={setTheme} />
         </div>
       </div>
     );
   }
 
   // ===== MAIN APPLICATION =====
+  const effectiveTheme = getEffectiveTheme();
+
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
+    <div className={`min-h-screen ${effectiveTheme === 'dark' ? 'dark' : ''}`}>
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-400/5 rounded-full blur-3xl" />
@@ -427,7 +429,7 @@ function App() {
 
                   {/* Actions - hidden only when search is expanded on mobile */}
                   <div className={`${isSearchExpanded ? 'hidden' : ''} flex items-center gap-2 sm:gap-2`}>
-                    <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                    <ThemeToggle theme={theme} systemTheme={systemTheme} onSetTheme={setTheme} />
                     <Tooltip text={viewMode === 'card' ? 'Switch to list view' : 'Switch to card view'}>
                       <button
                         onClick={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
@@ -502,7 +504,7 @@ function App() {
                     ? 'Try a different search term'
                     : showArchived
                       ? 'No notes in archive'
-                      : ''}
+                      : 'Welcome! Create your first note to get started'}
                 </p>
                 {!searchQuery && !showArchived && (
                   <button onClick={handleCreateNote} className="btn-primary">

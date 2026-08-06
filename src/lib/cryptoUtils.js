@@ -111,7 +111,7 @@ async function simpleSHA256(message) {
 
 /**
  * Generate SHA-256 hash of a string
- * @param {string} input - The three-word key or any string to hash
+ * @param {string} input - The key or any string to hash
  * @returns {Promise<string>} - Hexadecimal hash string
  */
 export async function generateHash(input) {
@@ -149,32 +149,20 @@ export async function generateDisplayId(input) {
 }
 
 /**
- * Validate that a key is a valid three-word key
+ * Validate that a key is not empty
  * @param {string} key - The key to validate
  * @returns {boolean} - Whether the key is valid
  */
 export function isValidKey(key) {
-  if (!key || typeof key !== 'string') return false;
-
-  const parts = key.split('-');
-  if (parts.length !== 3) return false;
-
-  return parts.every(part =>
-    part.length >= 2 &&
-    /^[a-zA-Z]+$/.test(part)
-  );
+  return key && typeof key === 'string' && key.trim().length > 0;
 }
 
 /**
- * Normalize a key to lowercase with hyphens
+ * Normalize a key by trimming whitespace
  * @param {string} key - The key to normalize
- * @returns {string} - Normalized key
+ * @returns {string} - Normalized key (trimmed)
  */
 export function normalizeKey(key) {
   if (!key) return '';
-  return key
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-zA-Z-]/g, '')
-    .replace(/-+/g, '-');
+  return key.trim();
 }

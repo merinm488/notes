@@ -1,5 +1,5 @@
 /**
- * Word list for three-word key generation
+ * Word list for random key generation
  */
 
 // Common English words - easy to remember and type
@@ -47,42 +47,45 @@ const WORD_LIST = [
 ];
 
 /**
- * Generate a random three-word key
- * @returns {string} - A three-word key like "yellow-lily-flies"
+ * Generate a random key
+ * @param {Object} options - Configuration options
+ * @param {number} options.length - Length of the random part (default: 16)
+ * @param {boolean} options.memorable - If true, generates a memorable word-based key
+ * @returns {string} - A random key
  */
-export function generateRandomKey() {
-  const words = [];
+export function generateRandomKey(options = {}) {
+  const { length = 16, memorable = false } = options;
 
-  for (let i = 0; i < 3; i++) {
-    const randomIndex = Math.floor(Math.random() * WORD_LIST.length);
-    words.push(WORD_LIST[randomIndex]);
+  if (memorable) {
+    // Generate memorable word-based key (3 words)
+    const words = [];
+    for (let i = 0; i < 3; i++) {
+      const randomIndex = Math.floor(Math.random() * WORD_LIST.length);
+      words.push(WORD_LIST[randomIndex]);
+    }
+    return words.join('-');
   }
 
-  return words.join('-');
+  // Generate a random alphanumeric key
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars[randomIndex];
+  }
+  return result;
 }
 
 /**
- * Generate a random three-word key with options
+ * Generate a random key with options
  * @param {Object} options - Configuration options
- * @param {string[]} options.exclude - Words to exclude from generation
- * @returns {string} - A three-word key
+ * @param {string[]} options.exclude - Words to exclude from generation (for memorable keys)
+ * @param {number} options.length - Length of the random key (default: 16)
+ * @param {boolean} options.memorable - If true, generates a memorable word-based key
+ * @returns {string} - A random key
  */
 export function generateRandomKeyWithOptions(options = {}) {
-  const { exclude = [] } = options;
-
-  const availableWords = WORD_LIST.filter(word => !exclude.includes(word));
-
-  if (availableWords.length < 3) {
-    return generateRandomKey();
-  }
-
-  const words = [];
-  for (let i = 0; i < 3; i++) {
-    const randomIndex = Math.floor(Math.random() * availableWords.length);
-    words.push(availableWords[randomIndex]);
-  }
-
-  return words.join('-');
+  return generateRandomKey(options);
 }
 
 /**

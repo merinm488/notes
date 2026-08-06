@@ -175,18 +175,12 @@ export async function POST(request) {
       return Response.json({ error: 'Key is required' }, { status: 400 });
     }
 
-    // Normalize key (same as frontend)
-    const normalizedKey = key
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-zA-Z-]/g, '')
-      .replace(/-+/g, '-');
-    const parts = normalizedKey.split('-');
+    // Normalize key - just trim whitespace
+    const normalizedKey = key.trim();
 
-    console.log(`[API POST] Normalized key: ${normalizedKey}, Parts: ${parts.join(', ')}`);
-
-    if (parts.length !== 3 || !parts.every(p => p.length >= 2 && /^[a-zA-Z]+$/.test(p))) {
-      return Response.json({ error: 'Invalid key format' }, { status: 400 });
+    // Validate key is not empty
+    if (normalizedKey.length === 0) {
+      return Response.json({ error: 'Key cannot be empty' }, { status: 400 });
     }
 
     const hash = generateHash(normalizedKey);
