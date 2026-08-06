@@ -284,7 +284,8 @@ export async function PUT(request) {
           folderId: data.folderId || userData.folders[0].id,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          pinned: false
+          pinned: false,
+          archived: false
         };
         userData.notes.unshift(newNote);
         break;
