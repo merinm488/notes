@@ -8,9 +8,12 @@ import crypto from 'crypto';
 
 const TEXTDB_API_BASE = 'https://textdb.dev/api/data';
 
-// Generate SHA-256 hash
+// Get pepper from environment or use development fallback
+const PEPPER_SECRET = process.env.PEPPER_SECRET || 'dev-pepper-change-in-production-9F2a-5xK8';
+
+// Generate SHA-256 hash with pepper
 function generateHash(input) {
-  return crypto.createHash('sha256').update(input).digest('hex');
+  return crypto.createHash('sha256').update(input + PEPPER_SECRET).digest('hex');
 }
 
 // Generate unique ID

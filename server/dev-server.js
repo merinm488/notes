@@ -28,6 +28,9 @@ const API_PORT = 3003;
 app.use(cors());
 app.use(express.json());
 
+// Get pepper from environment or use development fallback
+const PEPPER_SECRET = process.env.PEPPER_SECRET || 'dev-pepper-change-in-production-9F2a-5xK8';
+
 // Ensure directories exist
 function ensureDirectories() {
   if (!fs.existsSync(DB_DIR)) {
@@ -38,9 +41,9 @@ function ensureDirectories() {
   }
 }
 
-// Generate SHA-256 hash
+// Generate SHA-256 hash with pepper
 function generateHash(input) {
-  return crypto.createHash('sha256').update(input).digest('hex');
+  return crypto.createHash('sha256').update(input + PEPPER_SECRET).digest('hex');
 }
 
 // Get user file path
