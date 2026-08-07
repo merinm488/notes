@@ -9,8 +9,9 @@
  * - Actions menu
  */
 import { NoteActions } from './NoteActions';
+import { memo } from 'react';
 
-export function NoteCard({ note, onClick, onPin, isPinned, onDelete, onRename, onArchive, isArchivedView = false, folders = [], currentFolderId = null, isSearchResult = false }) {
+function NoteCard({ note, onClick, onPin, isPinned, onDelete, onRename, onArchive, isArchivedView = false, folders = [], currentFolderId = null, isSearchResult = false }) {
   // Format date for display
   const formatDate = (dateString) => {
     const now = new Date();
@@ -29,8 +30,36 @@ export function NoteCard({ note, onClick, onPin, isPinned, onDelete, onRename, o
   };
 
   // Get preview of content (first 100 chars)
-  const getPreview = (content) => {
+  const getPreview = (content, contentType = 'plain-text') => {
     if (!content) return 'No content';
+
+    if (contentType === 'markdown') {
+      // Strip markdown syntax for preview
+      let stripped = content
+        .replace(/^#{1,6}\s+/gm, '') // Headers: # ## ### etc.
+        .replace(/\*\*\*([^*]+)\*\*\*/g, '$1') // Bold + Italic
+        .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
+        .replace(/\*([^*]+)\*/g, '$1') // Italic
+        .replace(/~~([^~]+)~~/g, '$1') // Strikethrough
+        .replace(/`([^`]+)`/g, '$1') // Inline code
+        .replace(/```[\s\S]*?```/g, '[code block]') // Code blocks
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links: [text](url) -> text
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1') // Images
+        .replace(/^>\s+/gm, '') // Blockquotes
+        .replace(/^\s*[-*+]\s+/gm, '') // Bulleted lists
+        .replace(/^\s*\d+\.\s+/gm, '') // Numbered lists
+        .replace(/^\s*-\s*\[\s*\]\s+/gm, '') // Task lists
+        .replace(/^---$/gm, '') // Horizontal rules
+        .replace(/\|.*\|/g, '') // Tables (basic)
+        .replace(/\n/g, ' ') // Newlines to spaces
+        .trim();
+
+      return stripped.length > 100
+        ? stripped.substring(0, 100) + '...'
+        : stripped;
+    }
+
+    // Original plain text handling
     const stripped = content.replace(/[#*`\-\[\]]/g, '').trim();
     return stripped.length > 100
       ? stripped.substring(0, 100) + '...'
@@ -80,7 +109,7 @@ export function NoteCard({ note, onClick, onPin, isPinned, onDelete, onRename, o
 
       {/* Content preview - takes available space */}
       <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3 flex-grow">
-        {getPreview(note.content)}
+        {getPreview(note.content, note.contentType)}
       </p>
 
       {/* Footer - fixed at bottom */}
@@ -105,3 +134,6 @@ export function NoteCard({ note, onClick, onPin, isPinned, onDelete, onRename, o
     </div>
   );
 }
+
+// Memoize to prevent unnecessary re-renders
+export default memo(NoteCard);

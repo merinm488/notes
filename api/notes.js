@@ -281,6 +281,7 @@ export async function PUT(request) {
           id: generateId(),
           title: data.title || 'Untitled',
           content: data.content || '',
+          contentType: data.contentType || 'plain-text',
           folderId: data.folderId || userData.folders[0].id,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useNotes } from './hooks/useNotes';
 import { useTheme } from './hooks/useTheme';
@@ -7,10 +7,11 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { UserDisplay } from './components/UserDisplay';
 import { FolderList } from './components/FolderList';
 import { SearchBar } from './components/SearchBar';
-import { NoteCard } from './components/NoteCard';
+import NoteCard from './components/NoteCard';
 import { NoteListView } from './components/NoteListView';
 import { NoteActions } from './components/NoteActions';
 import { NoteEditor } from './components/NoteEditor';
+import { NotePreview } from './components/NotePreview';
 import { Tooltip } from './components/Tooltip';
 import * as db from './lib/db';
 
@@ -65,6 +66,7 @@ function App() {
 
   // Editor state
   const [editingNote, setEditingNote] = useState(null);
+  const [viewingNote, setViewingNote] = useState(null);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
 
   // Mobile sidebar state - show by default on desktop, hidden on mobile/tablet
@@ -108,27 +110,27 @@ function App() {
   }, [checkSession]);
 
   /**
-   * Handle note card click - open editor
+   * Handle note card click - open preview
    */
-  const handleNoteClick = (note) => {
-    setEditingNote(note);
+  const handleNoteClick = useCallback((note) => {
+    setViewingNote(note);
     // Close sidebar on mobile after selecting a note
     if (window.innerWidth < 1024) {
       setShowSidebar(false);
     }
-  };
+  }, []);
 
   /**
    * Handle creating a new note
    */
-  const handleCreateNote = () => {
+  const handleCreateNote = useCallback(() => {
     setIsCreatingNote(true);
-  };
+  }, []);
 
   /**
    * Handle folder selection - switch to active view if in archived mode
    */
-  const handleFolderSelect = (folderId) => {
+  const handleFolderSelect = useCallback((folderId) => {
     setActiveFolder(folderId);
     if (showArchived) {
       setShowArchived(false);
@@ -137,30 +139,62 @@ function App() {
     if (window.innerWidth < 1024) {
       setShowSidebar(false);
     }
+  }, [showArchived, setActiveFolder, setShowArchived]);
+
+  /**
+   * Generate unique ID for new notes
+   */
+  const generateId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
 
   /**
    * Handle saving note (create or update)
    */
-  const handleSaveNote = (noteData) => {
+  const handleSaveNote = useCallback((noteData) => {
     if (editingNote) {
+      // Update existing note - construct the updated note object
+      const updatedNote = {
+        ...editingNote,
+        ...noteData,
+        id: editingNote.id, // Ensure ID is preserved
+        updatedAt: new Date().toISOString()
+      };
       updateNote(editingNote.id, noteData);
+
+      // Close editor and show preview
+      setEditingNote(null);
+      setViewingNote(updatedNote);
     } else {
+      // Create new note - construct the new note object
+      const newNote = {
+        id: generateId(),
+        title: noteData.title || 'Untitled',
+        content: noteData.content || '',
+        contentType: noteData.contentType || 'plain-text',
+        folderId: noteData.folderId || activeFolder,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        pinned: false,
+        archived: false
+      };
       createNote(noteData);
+
+      // Close editor and show preview
+      setIsCreatingNote(false);
+      setViewingNote(newNote);
     }
-    setEditingNote(null);
-    setIsCreatingNote(false);
-  };
+  }, [editingNote, updateNote, createNote, activeFolder]);
 
   /**
    * Handle deleting a note
    */
-  const handleDeleteNote = () => {
+  const handleDeleteNote = useCallback(() => {
     if (editingNote) {
       deleteNote(editingNote.id);
       setEditingNote(null);
     }
-  };
+  }, [editingNote, deleteNote]);
 
   // ===== LOGIN SCREEN =====
   if (!isAuthenticated) {
@@ -259,7 +293,7 @@ function App() {
                         key={note.id}
                         onClick={() => handleNoteClick(note)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors group ${
-                          editingNote?.id === note.id
+                          viewingNote?.id === note.id || editingNote?.id === note.id
                             ? 'bg-yellow-100 dark:bg-yellow-900/20'
                             : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
@@ -561,6 +595,28 @@ function App() {
           </div>
         </main>
       </div>
+
+      {/* ===== NOTE PREVIEW MODAL ===== */}
+      {viewingNote && (
+        <NotePreview
+          note={viewingNote}
+          folders={folders}
+          onEdit={() => {
+            setEditingNote(viewingNote);
+            setViewingNote(null);
+          }}
+          onDelete={() => {
+            deleteNote(viewingNote.id);
+            setViewingNote(null);
+          }}
+          onClose={() => setViewingNote(null)}
+          onContentUpdate={(noteId, updates) => {
+            updateNote(noteId, updates);
+            // Update the viewingNote to reflect changes
+            setViewingNote(prev => prev ? { ...prev, ...updates } : null);
+          }}
+        />
+      )}
 
       {/* ===== NOTE EDITOR MODAL ===== */}
       {(editingNote || isCreatingNote) && (

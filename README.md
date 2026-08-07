@@ -1,6 +1,6 @@
 # Notes Application
 
-A modern, full-stack notes application with passwordless authentication using custom keys. Features a beautiful UI with dark/light themes, folder organization, search, and pinning functionality.
+A modern, full-stack notes application with passwordless authentication using custom keys. Features a beautiful UI with dark/light themes, folder organization, search, markdown support, and pinning functionality.
 
 ## ✨ Features
 
@@ -13,6 +13,9 @@ A modern, full-stack notes application with passwordless authentication using cu
 - 📱 **Fully Responsive** - Works seamlessly on mobile, tablet, and desktop
 - ⚡ **Fast & Lightweight** - Built with Vite for instant loading
 - 🔒 **Secure PWA** - Service worker only caches static assets, never sensitive data
+- ✍️ **Markdown Support** - Full markdown editor with live preview, syntax highlighting, and keyboard shortcuts
+- 📋 **Multiple View Modes** - Switch between card view and list view
+- 🗄️ **Archive Notes** - Archive old notes while keeping them accessible
 
 ## 🏗️ Architecture
 
@@ -29,16 +32,20 @@ This is a **full-stack application** with:
 Notes/
 ├── src/
 │   ├── components/          # UI components
-│   │   ├── Login.jsx        # Authentication screen
-│   │   ├── NoteCard.jsx     # Individual note display
-│   │   ├── NoteEditor.jsx   # Note editing modal
-│   │   ├── NoteListView.jsx # List view of notes
-│   │   ├── NoteActions.jsx  # Note action buttons
-│   │   ├── FolderList.jsx   # Folder management
-│   │   ├── SearchBar.jsx    # Search functionality
-│   │   ├── ThemeToggle.jsx  # Dark/light theme switcher
-│   │   ├── UserDisplay.jsx  # User info and logout
-│   │   └── Tooltip.jsx      # Tooltip component
+│   │   ├── Login.jsx          # Authentication screen
+│   │   ├── NoteCard.jsx       # Individual note display
+│   │   ├── NoteEditor.jsx     # Note editing modal
+│   │   ├── NotePreview.jsx    # Note preview modal (read-only)
+│   │   ├── NoteListView.jsx   # List view of notes
+│   │   ├── NoteActions.jsx    # Note action buttons
+│   │   ├── FolderList.jsx     # Folder management
+│   │   ├── SearchBar.jsx      # Search functionality
+│   │   ├── ThemeToggle.jsx    # Dark/light theme switcher
+│   │   ├── UserDisplay.jsx    # User info and logout
+│   │   ├── Tooltip.jsx        # Tooltip component
+│   │   ├── MarkdownEditor.jsx  # Markdown editor with toolbar
+│   │   ├── MarkdownToolbar.jsx# Markdown formatting toolbar
+│   │   └── MarkdownPreview.jsx # Markdown renderer with syntax highlighting
 │   ├── hooks/               # Custom React hooks
 │   │   ├── useAuth.js       # Authentication logic
 │   │   ├── useNotes.js      # Notes and folders management
@@ -162,6 +169,28 @@ The application supports two beautiful themes:
 - Clean white background with yellow accents
 - Warm, inviting aesthetic
 - Great for daytime use
+
+## ✍️ Markdown Editor Features
+
+The application includes a powerful markdown editor with:
+
+- **Live Preview** - Toggle between edit and preview modes
+- **Syntax Highlighting** - Code blocks with highlight.js
+- **Keyboard Shortcuts** - Ctrl+B (bold), Ctrl+I (italic), Ctrl+K (link), Ctrl+` (code), Ctrl+Q (quote), Ctrl+L (list)
+- **Auto-list Continuation** - Automatically continues numbered and bullet lists
+- **Smart Indentation** - Tab key inserts 2 spaces
+- **GitHub Flavored Markdown** - Tables, task lists, strikethrough support
+- **Formatting Toolbar** - Quick buttons for common formatting
+
+Supported Markdown Features:
+- Headers (h1-h6)
+- Bold, italic, strikethrough
+- Inline code and code blocks with syntax highlighting
+- Blockquotes
+- Ordered and unordered lists
+- Links and images
+- Tables
+- Horizontal rules
 
 
 ### Backend Storage Options

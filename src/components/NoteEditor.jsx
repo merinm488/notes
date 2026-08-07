@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { MarkdownEditor } from './MarkdownEditor';
 
 /**
  * NoteEditor Component
  *
  * Full-featured note editor with:
  * - Title editing
- * - Content editing (plain text)
+ * - Content editing (plain text or markdown)
  * - Folder selection
+ * - Content type selection (plain-text / markdown)
  * - Save and cancel actions
  * - Delete option
+ * - Auto-save for checkbox changes
  */
 export function NoteEditor({
   note,
@@ -20,6 +23,7 @@ export function NoteEditor({
 }) {
   const [title, setTitle] = useState(note?.title || '');
   const [content, setContent] = useState(note?.content || '');
+  const [contentType, setContentType] = useState(note?.contentType || 'plain-text');
   const [folderId, setFolderId] = useState(note?.folderId || activeFolder);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -28,9 +32,10 @@ export function NoteEditor({
     setIsDirty(
       title !== (note?.title || '') ||
       content !== (note?.content || '') ||
+      contentType !== (note?.contentType || 'plain-text') ||
       folderId !== (note?.folderId || activeFolder)
     );
-  }, [title, content, folderId, note, activeFolder]);
+  }, [title, content, contentType, folderId, note, activeFolder]);
 
   /**
    * Handle save
@@ -44,6 +49,7 @@ export function NoteEditor({
     onSave({
       title: title.trim() || 'Untitled',
       content: content.trim(),
+      contentType,
       folderId
     });
   };
@@ -77,6 +83,14 @@ export function NoteEditor({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isDirty, handleSave]);
+
+  /**
+   * Handle content changes from regular editing (typing)
+   * Only updates local state, does NOT auto-save
+   */
+  const handleContentChange = useCallback((newContent) => {
+    setContent(newContent);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
@@ -124,18 +138,38 @@ export function NoteEditor({
             </select>
           </div>
 
-          {/* Content Textarea */}
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing your note..."
-            className="w-full min-h-[300px] bg-transparent border-0 focus:ring-0 p-0 resize-none placeholder-gray-400 dark:placeholder-gray-500 leading-relaxed text-gray-900 dark:text-gray-100"
-          />
-
-          {/* Hints */}
-          <div className="hidden sm:block text-xs text-gray-500 dark:text-gray-400">
-            Tip: Press Ctrl/Cmd + S to save
+          {/* Content Type Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">as</span>
+            <select
+              value={contentType}
+              onChange={(e) => setContentType(e.target.value)}
+              className="bg-gray-100 dark:bg-gray-700 border-0 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-yellow-500 text-gray-900 dark:text-gray-100"
+            >
+              <option value="plain-text" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                Plain Text
+              </option>
+              <option value="markdown" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                Markdown
+              </option>
+            </select>
           </div>
+
+          {/* Content Editor - Plain Text or Markdown */}
+          {contentType === 'markdown' ? (
+            <MarkdownEditor
+              value={content}
+              onChange={handleContentChange}
+              placeholder="Start writing your note... (supports **bold**, *italic*, `code`, > quotes, lists, tables, etc.)"
+            />
+          ) : (
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Start writing your note..."
+              className="w-full min-h-[300px] bg-transparent border-0 focus:ring-0 p-0 resize-none placeholder-gray-400 dark:placeholder-gray-500 leading-relaxed text-gray-900 dark:text-gray-100"
+            />
+          )}
         </div>
 
         {/* Footer */}

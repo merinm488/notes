@@ -22,8 +22,34 @@ export function NoteListView({ notes, onClick, onPin, onDelete, onRename, onArch
     return date.toLocaleDateString();
   };
 
-  const getPreview = (content) => {
+  const getPreview = (content, contentType = 'plain-text') => {
     if (!content) return 'No content';
+
+    if (contentType === 'markdown') {
+      // Strip markdown syntax for preview
+      let stripped = content
+        .replace(/^#{1,6}\s+/gm, '') // Headers
+        .replace(/\*\*\*([^*]+)\*\*\*/g, '$1') // Bold + Italic
+        .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
+        .replace(/\*([^*]+)\*/g, '$1') // Italic
+        .replace(/~~([^~]+)~~/g, '$1') // Strikethrough
+        .replace(/`([^`]+)`/g, '$1') // Inline code
+        .replace(/```[\s\S]*?```/g, '[code]') // Code blocks
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1') // Images
+        .replace(/^>\s+/gm, '') // Blockquotes
+        .replace(/^\s*[-*+]\s+/gm, '') // Bulleted lists
+        .replace(/^\s*\d+\.\s+/gm, '') // Numbered lists
+        .replace(/^\s*-\s*\[\s*\]\s+/gm, '') // Task lists
+        .replace(/^---$/gm, '') // Horizontal rules
+        .replace(/\|.*\|/g, '') // Tables
+        .replace(/\n/g, ' ') // Newlines to spaces
+        .trim();
+
+      return stripped.length > 80 ? stripped.substring(0, 80) + '...' : stripped;
+    }
+
+    // Original plain text handling
     const stripped = content.replace(/[#*`\-\[\]]/g, '').trim();
     return stripped.length > 80 ? stripped.substring(0, 80) + '...' : stripped;
   };
@@ -72,7 +98,7 @@ export function NoteListView({ notes, onClick, onPin, onDelete, onRename, onArch
           {/* Preview - hidden on mobile */}
           <div className="col-span-3 hidden sm:block">
             <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {getPreview(note.content)}
+              {getPreview(note.content, note.contentType)}
             </p>
           </div>
 

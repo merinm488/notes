@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as db from '../lib/db';
 
 /**
@@ -210,6 +210,9 @@ export function useNotes(userHash) {
     fetchData();
   }, [fetchData]);
 
+  // Memoize filtered notes to avoid expensive filtering on every render
+  const filteredNotes = useMemo(getFilteredNotes, [notes, activeFolder, searchQuery, showArchived]);
+
   return {
     notes,
     folders,
@@ -217,7 +220,7 @@ export function useNotes(userHash) {
     searchQuery,
     showArchived,
     isLoading,
-    filteredNotes: getFilteredNotes(),
+    filteredNotes,
     setActiveFolder,
     setSearchQuery,
     setShowArchived,
